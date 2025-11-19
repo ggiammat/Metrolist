@@ -227,4 +227,6 @@ dependencies {
     coreLibraryDesugaring(libs.desugaring)
 
     implementation(libs.timber)
+
+    implementation(libs.taskerpluginlibrary)
 }

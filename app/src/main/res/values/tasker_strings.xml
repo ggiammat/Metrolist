@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="previous_like_value_name">Previous Like Value</string>
+    <string name="previous_like_value_description">Contains the previous Like status. Can be either "true" (Liked) of "false" (Not Liked)</string>
+    <string name="like_action_name">Like Action</string>
+    <string name="like_action_description">The action to perform. It can be "Like", "Unlike" or "Toggle"</string>
+
+    <string name="song_id_name">Song ID</string>
+    <string name="song_id_description">The ID of the song to get the info for. Leave empty to get the info for the current song</string>
+
+    <string name="out_song_id_name">Song ID</string>
+    <string name="out_song_id_description">The ID of the song</string>
+    <string name="out_song_title_name">Song Title</string>
+    <string name="out_song_title_description">The title of the song</string>
+    <string name="out_artist_name_name">Artist Name</string>
+    <string name="out_artist_name_description">The name of the artist</string>
+    <string name="out_liked_name">Liked</string>
+    <string name="out_liked_description">Whether the song is liked or not</string>
+    <string name="out_album_title_name">Album</string>
+    <string name="out_album_title_description">The album of the song</string>
+    <string name="out_album_id_name">Album ID</string>
+    <string name="out_album_id_description">The ID of the album of the song</string>
+    <string name="out_album_year_name">Year</string>
+    <string name="out_album_year_description">The year of the song</string>
+
+    <string name="command_name">Command</string>
+    <string name="command_description">The command to execute</string>
+    <string name="out_executed_name">Executed</string>
+    <string name="out_executed_description">Whether the command was executed or not</string>
+
+</resources>

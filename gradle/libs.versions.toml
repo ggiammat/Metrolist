@@ -36,6 +36,8 @@ materialKolor = "3.0.1"
 kuromojiIpadic = "0.9.0"
 extractor = "8773f0d"
 
+taskerpluginlibrary = "0.4.10"
+
 [libraries]
 annotation = { module = "androidx.annotation:annotation", version.ref = "annotation" }
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
@@ -113,6 +115,8 @@ multidex = { module = "androidx.multidex:multidex", version.ref = "multidex" }
 extractor = { module = "com.github.mostafaalagamy:MetrolistExtractor", version.ref = "extractor" }
 
 kuromoji-ipadic = { module = "com.atilika.kuromoji:kuromoji-ipadic", version.ref = "kuromojiIpadic" }
+
+taskerpluginlibrary = { module = "com.joaomgcd:taskerpluginlibrary", version.ref = "taskerpluginlibrary"}
 
 [plugins]
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
