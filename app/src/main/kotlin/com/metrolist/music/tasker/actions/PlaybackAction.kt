@@ -45,14 +45,6 @@ enum class Commands {
     LIKE_SONG,
     UNLIKE_SONG,
     TOGGLE_LIKE,
-
-    PLAY_ARTIST_RADIO,
-    PLAY_ARTIST,
-    PLAY_LOCAL_ALBUM,
-    PLAY_CACHED_OR_DOWNLOADED,
-    PLAY_LIKED,
-    PLAY_TOP_100,
-    PLAY_TOP_500,
 }
 
 @TaskerInputRoot
@@ -105,7 +97,7 @@ class PlaybackCommandConfigActivity : ComponentActivity(), TaskerPluginConfig<Pl
                     inputLabel = stringResource(R.string.command_name),
                     inputDescription = stringResource(R.string.command_description),
                     command,
-                    inputOptions = Commands.entries.map { c -> c.toString() },
+                    inputOptions = Commands.entries.map { c -> Pair(c.toString(), null) },
                     taskerVariables = taskerHelper.relevantVariables.toList()
                 )
             }
@@ -206,99 +198,6 @@ class PlaybackCommandActionRunner : CommonRunner<PlaybackCommandInput, PlaybackC
                         executed = true
                     }
                 }
-            }
-
-            Commands.PLAY_ARTIST_RADIO -> {
-                val artistEntity = musicService.database.song(musicService.currentMediaMetadata.value?.id)
-                    .firstOrNull()?.artists?.firstOrNull()
-                if (artistEntity != null) {
-                    val artistPage = YouTube.artist(artistEntity.id)
-                    withContext(Dispatchers.Main) {
-                        musicService.playQueue(YouTubeQueue(artistPage.getOrNull()?.artist?.radioEndpoint!!))
-                    }
-                    executed = true
-                }
-            }
-
-            Commands.PLAY_ARTIST -> {
-                val artistEntity = musicService.database.song(musicService.currentMediaMetadata.value?.id)
-                    .firstOrNull()?.artists?.firstOrNull()
-                if (artistEntity != null) {
-                    val artistPage = YouTube.artist(artistEntity.id)
-                    withContext(Dispatchers.Main) {
-                        musicService.playQueue(YouTubeQueue(artistPage.getOrNull()?.artist?.shuffleEndpoint!!))
-                    }
-                    executed = true
-                }
-            }
-
-            Commands.PLAY_LOCAL_ALBUM -> {
-                // This will work only if the album metadata has been stored in the database already
-                // (for instance by opening the AlbumScreen in the application. Otherwise we should
-                // first download form YTM (TODO: check on AlbumScreen how to do this)
-                val albumEntity = musicService.database.song(musicService.currentMediaMetadata.value?.id)
-                    .firstOrNull()?.album
-
-                if (albumEntity != null) {
-                    val albumWithSongs = musicService.database.albumWithSongs(albumEntity.id).firstOrNull()
-
-                    if(albumWithSongs != null)
-                    withContext(Dispatchers.Main) {
-                        musicService.playQueue(LocalAlbumRadio(albumWithSongs))
-                        executed = true
-                    }
-                }
-            }
-
-            Commands.PLAY_CACHED_OR_DOWNLOADED -> {
-                val cachedIds = musicService.playerCache.keys.mapNotNull { it?.toString() }.toSet()
-
-                val songs = if (cachedIds.isNotEmpty()) {
-                    musicService.database.getSongsByIds(cachedIds.toList())
-                } else {
-                    emptyList()
-                }
-
-                val completeSongs = songs.filter {
-                    val contentLength = it.format?.contentLength
-                    contentLength != null && musicService.playerCache.isCached(it.song.id, 0, contentLength)
-                }
-
-                val downloadedSongs = musicService.database.downloadedSongs(SongSortType.NAME, true).firstOrNull() ?: emptyList()
-
-                val all = completeSongs.plus(downloadedSongs).shuffled()
-
-                val queue = ListQueue("Tasker Cached and Downloaded", all.map { s -> s.toMediaItem() })
-                withContext(Dispatchers.Main) {
-                    musicService.playQueue(queue)
-                    executed = true
-                }
-            }
-
-            Commands.PLAY_TOP_100 -> {
-                val top100 = musicService.database.mostPlayedSongs(0, 0, 0, null).firstOrNull() ?: emptyList()
-
-                val queue = ListQueue("Tasker Top 100", top100.shuffled().map { s -> s.toMediaItem() })
-                withContext(Dispatchers.Main) {
-                    musicService.playQueue(queue)
-                    executed = true
-                }
-            }
-
-            Commands.PLAY_LIKED -> {
-                val liked = musicService.database.likedSongsByNameAsc().firstOrNull() ?: emptyList()
-
-                val queue = ListQueue("Tasker Liked", liked.shuffled().map { s -> s.toMediaItem() })
-                withContext(Dispatchers.Main) {
-                    musicService.playQueue(queue)
-                    executed = true
-                }
-            }
-            else -> {
-                return TaskerPluginResultErrorWithOutput(
-                    code = 1,
-                    message = "Command ${input.regular.command} not yet implemented"
-                )
             }
         }
 

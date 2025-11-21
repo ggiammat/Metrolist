@@ -28,4 +28,15 @@
     <string name="out_executed_name">Executed</string>
     <string name="out_executed_description">Whether the command was executed or not</string>
 
+    <string name="tasker_input_playlist_name">Playlist Name</string>
+    <string name="tasker_input_playlist_name_description">The name of the playlist</string>
+
+    <string name="tasker_input_arg">Argument</string>
+    <string name="tasker_input_arg_description">Argument to build the playlist (not always required)</string>
+
+    <string name="tasker_input_sorting">Sorting</string>
+    <string name="tasker_input_sorting_description">The method used to sort the playlist</string>
+
+    <string name="tasker_input_limit">Limit</string>
+    <string name="tasker_input_limit_description">The maximum number of songs to add to the queue</string>
 </resources>

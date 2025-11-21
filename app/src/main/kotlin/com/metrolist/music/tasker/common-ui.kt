@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
@@ -17,6 +15,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -62,7 +61,7 @@ fun TextFieldWithTaskerVariables(text: MutableState<String>, options: List<Strin
 
 @Composable
 fun ChoicesForString(
-    radioOptions: List<String>,
+    radioOptions: List<Pair<String, String?>>,
     selectedOption: MutableState<String>,
     modifier: Modifier = Modifier
 ) {
@@ -74,22 +73,36 @@ fun ChoicesForString(
                     .height(42.dp)
                     .fillMaxWidth()
                     .selectable(
-                        selected = (text == selectedOption.value),
-                        onClick = { selectedOption.value = text },
+                        selected = (text.first == selectedOption.value),
+                        onClick = { selectedOption.value = text.first },
                         role = Role.RadioButton
                     )
                     .padding(horizontal = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                RadioButton(
-                    selected = (text == selectedOption.value),
-                    onClick = null // null recommended for accessibility with screen readers
-                )
-                Text(
-                    text = text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(start = 16.dp)
-                )
+                if (text.first == "---") {
+                    HorizontalDivider(thickness = 1.dp)
+                } else {
+                    RadioButton(
+                        selected = (text.first == selectedOption.value),
+                        onClick = null // null recommended for accessibility with screen readers
+                    )
+                    Column {
+                        Text(
+                            text = text.first,
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.padding(start = 16.dp)
+                        )
+                        if (text.second != null && text.second != "") {
+                            Text(
+                                text = text.second ?: "",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontStyle = FontStyle.Italic,
+                                modifier = Modifier.padding(start = 16.dp)
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -136,7 +149,7 @@ fun TaskerConfigurationItem(
     inputLabel: String,
     inputDescription: String,
     inputValue: MutableState<String>,
-    inputOptions: List<String> = listOf(),
+    inputOptions: List<Pair<String, String?>> = listOf(),
     taskerVariables: List<String> = listOf(),
     startWitFreeTextEnabled: Boolean = false
 ) {
@@ -220,7 +233,11 @@ fun TaskerConfigurationScreenPreview() {
             inputLabel = "Like Action",
             inputDescription = "How to set the Like",
             remember { mutableStateOf("") },
-            inputOptions = listOf("Like", "Unlike", "Toggle"),
+            inputOptions = listOf(
+                Pair("Like", "like description"),
+                Pair("Unlike", null),
+                Pair("Toggle", "")
+            ),
             taskerVariables = listOf("%name", "%asd", "%asd2")
         )
 
@@ -228,9 +245,15 @@ fun TaskerConfigurationScreenPreview() {
             inputLabel = "Command",
             inputDescription = "The playback command to execute",
             remember { mutableStateOf("") },
-            inputOptions = listOf("PLAY", "STOP", "ENABLE SHUFFLE", "NEXT SONG"),
+            inputOptions = listOf(
+                Pair("PLAY", null),
+                Pair("STOP", null),
+                Pair("---", null),
+                Pair("ENABLE SHUFFLE", null),
+                Pair("NEXT SONG", null)
+            ),
             taskerVariables = listOf("%name", "%asd", "%asd2"),
-            startWitFreeTextEnabled = true
+            startWitFreeTextEnabled = false
         )
 
     }
