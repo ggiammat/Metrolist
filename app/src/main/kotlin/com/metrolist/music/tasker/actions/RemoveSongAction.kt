@@ -40,6 +40,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
@@ -137,12 +138,34 @@ class RemoveSongActionRunner : CommonRunner<RemoveSongInput, RemoveSongOutput>()
         val songId =
             input.regular.songId ?: return TaskerPluginResultErrorWithOutput(1, "Empty songId")
 
-        DownloadService.sendRemoveDownload(
-            context,
-            ExoDownloadService::class.java,
-            songId,
-            false,
-        )
+        val song = musicService.database.song(songId).firstOrNull()?.song ?: return TaskerPluginResultErrorWithOutput(1, "Song not found in the database")
+
+        // remove from downloads
+        if (song.isDownloaded) {
+            DownloadService.sendRemoveDownload(
+                context,
+                ExoDownloadService::class.java,
+                songId,
+                false,
+            )
+        }
+
+        // remove from cache
+        withContext(Dispatchers.Main) {
+            musicService.playerCache.removeResource(songId)
+        }
+
+        // remove from library (both the db and YTM)
+        if (song.inLibrary != null){
+
+            song.libraryRemoveToken?.let {
+                withContext(Dispatchers.IO){
+                    YouTube.feedback(listOf(it))
+                }
+            }
+
+            musicService.database.query { update(song.toggleLibrary()) }
+        }
 
         return TaskerPluginResultSucess()
     }
