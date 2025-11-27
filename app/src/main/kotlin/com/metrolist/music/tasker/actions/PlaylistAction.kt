@@ -7,6 +7,7 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.res.stringResource
+import androidx.media3.common.MediaItem
 import com.joaomgcd.taskerpluginlibrary.SimpleResultError
 import com.joaomgcd.taskerpluginlibrary.config.TaskerPluginConfig
 import com.joaomgcd.taskerpluginlibrary.config.TaskerPluginConfigHelper
@@ -18,11 +19,14 @@ import com.joaomgcd.taskerpluginlibrary.runner.TaskerPluginResult
 import com.joaomgcd.taskerpluginlibrary.runner.TaskerPluginResultErrorWithOutput
 import com.joaomgcd.taskerpluginlibrary.runner.TaskerPluginResultSucess
 import com.metrolist.innertube.YouTube
+import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.music.R
+import com.metrolist.music.constants.ArtistSongSortType
 import com.metrolist.music.constants.PlaylistSortType
 import com.metrolist.music.constants.SongSortType
 import com.metrolist.music.db.MusicDatabase
 import com.metrolist.music.db.entities.Playlist
+import com.metrolist.music.db.entities.Song
 import com.metrolist.music.extensions.toMediaItem
 import com.metrolist.music.playback.MusicService
 import com.metrolist.music.playback.queues.ListQueue
@@ -44,6 +48,15 @@ import java.time.ZoneOffset
 import javax.inject.Inject
 
 enum class AutoPlaylist(val title: String, val description: String? = null) {
+
+    QuickPics("[Auto] Quick Picks", ""),
+
+    Recommendations("[Auto] Recommendations"),
+
+    KeepListing("[Auto] Keep Listening"),
+
+    ForgottenFavorites("[Auto] Forgotten Favorites"),
+
     MostPlayed("[Auto] Most Played Songs", "Argument specify the number of days"),
     Downloaded("[Auto] Downloaded Songs"),
     Liked("[Auto] Liked Songs"),
@@ -215,6 +228,59 @@ class PlaylistActionRunner : CommonRunner<PlaylistInput, PlaylistOutput>() {
         var queue: Queue?
 
         when (playlistName) {
+
+            AutoPlaylist.QuickPics.title -> {
+                val songs = musicService.database.quickPicks().first().shuffled()
+                queue = ListQueue("Quick Picks", songs.map { s -> s.toMediaItem() })
+            }
+
+            AutoPlaylist.Recommendations.title -> {
+
+                // take 5 songs randomly chosen within the list of the 10 most played songs in the last two weeks
+                val fromTimeStamp = System.currentTimeMillis() - 86400000 * 7 * 2
+                val seedSongs = musicService.database.mostPlayedSongs(fromTimeStamp, limit = 10).first().shuffled().take(5)
+
+                val songs = mutableListOf<MediaItem>()
+
+                // for each song, get the first 10 related songs from youtube
+                seedSongs.forEach { song ->
+                    val endpoint =
+                        YouTube.next(WatchEndpoint(videoId = song.id)).getOrNull()?.relatedEndpoint
+                            ?: return@forEach
+                    val page = YouTube.related(endpoint).getOrNull() ?: return@forEach
+                    songs.addAll(page.songs.shuffled().take(10).map { s -> s.toMediaItem() })
+                    }
+
+                queue = ListQueue("Recommendations", songs)
+
+            }
+
+            AutoPlaylist.KeepListing.title -> {
+                val fromTimeStamp = System.currentTimeMillis() - 86400000 * 7 * 2  // last two weeks
+                val keepListeningSongs = musicService.database.mostPlayedSongs(fromTimeStamp, limit = 15).first()
+                val keepListeningAlbums = musicService.database.mostPlayedAlbums(fromTimeStamp, limit = 8).first()
+                val keepListeningArtists = musicService.database.mostPlayedArtists(fromTimeStamp, limit = 8).first()
+
+                val items = mutableListOf<Song>()
+                items.addAll(keepListeningSongs.shuffled().take(5))
+
+                keepListeningAlbums.forEach { album ->
+                    items.addAll(musicService.database.albumSongs(album.id).first().shuffled().take(5))
+                }
+
+                keepListeningArtists.forEach { artist ->
+                    items.addAll(musicService.database.artistSongs(artist.id, ArtistSongSortType.NAME, true).first().shuffled().take(5))
+                }
+
+                Timber.tag("Tasker").d("Found ${items.size} songs")
+                queue = ListQueue("Keep Listening", items.map { s -> s.toMediaItem() })
+
+            }
+
+            AutoPlaylist.ForgottenFavorites.title -> {
+                val songs = musicService.database.forgottenFavorites().first()
+                queue = ListQueue("Forgotten Favorites", songs.map { s -> s.toMediaItem() })
+            }
 
             AutoPlaylist.ArtistRadio.title -> {
                 val artistId =
