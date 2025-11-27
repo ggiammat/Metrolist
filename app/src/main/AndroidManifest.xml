@@ -203,6 +203,16 @@
         </activity>
 
         <activity
+            android:name=".tasker.actions.ManagePlaylistConfigActivity"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:label="Manage Playlist">
+            <intent-filter>
+                <action android:name="com.twofortyfouram.locale.intent.action.EDIT_SETTING" />
+            </intent-filter>
+        </activity>
+
+        <activity
             android:name=".tasker.actions.RemoveSongConfigActivity"
             android:exported="true"
             android:icon="@mipmap/ic_launcher"
